@@ -11,10 +11,10 @@ module.exports={
 	db_user:'your mysql user',
 	db_port:3306,
 	db_pass:'your mysql password',
-	db_name:'database',
+	db_name:'database name',
 
 	//redis
-	redis_host:'localhost',
+	redis_host:'your host',
 	redis_port:6379,
 	redis_pass:null,
 
