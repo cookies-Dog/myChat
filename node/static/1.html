@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+	<form id="form1" action="http://localhost:8080/upload" method="post" enctype="multipart/form-data">
+		<input type="text" name="name" /><br>
+		<input type="password" name="pass" /><br>
+		<input type="file" name="f1"><br>
+		<input type="submit" value="提交" id="oBtn">
+	</form>
+<script type="text/javascript">
+	// let form=new FormData();
+	// form.append('name','blue');
+	// form.append('pass','123456');
+
+	/*原生AJAX*/
+	// let xhr=new XMLHttpRequest();
+
+	// xhr.open('POST','a',true);
+	// xhr.send(form);
+
+	// xhr.onreadystate=function (){
+	// 	if(xhr.readState==4){
+	// 		if(xhr.status>=200 && xhr.status<300 || xhr.status==304){
+	// 			alert(xhr.responseText);
+	// 		}else{
+	// 			alert('失败');
+	// 		}
+	// 	}
+	// }
+	
+	/*fetch*/
+	// (async ()=>{
+	// 	let res=await fetch('/a',{
+	// 		method: 'post',
+	// 		body: form
+	// 	})
+	// 	let data=await res.text();
+
+	// 	alert(data)
+	// })();
+	// let form=new FormData(document.getElementById('form1'));
+	// let oBtn=document.getElementById('oBtn');
+	// oBtn.onclick=async function(){
+	// 	let res=await fetch('/upload',{
+	// 		method: 'post',
+	// 		body: form
+	// 	})
+	// 	let data=await res.text();
+
+	// 	alert(data)
+	// } 
+</script>
+</body>
+</html>
