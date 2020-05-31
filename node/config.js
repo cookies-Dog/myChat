@@ -4,7 +4,7 @@ module.exports={
 	//服务器端口
 	port:8080,
 	MD5_SUFFIX: 'xxxxxxx',
-	my_token:'xxxxxxxxxhoho',
+        my_token:'xxxxxxxxxx',
 
 	//数据库
 	db_host:'your host',
