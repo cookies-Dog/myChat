@@ -1,5 +1,5 @@
 Arguments: 
-  C:\Program Files\nodejs\node.exe C:\Users\Administrator\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js add koa-better-body
+  C:\Program Files\nodejs\node.exe C:\Users\Administrator\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js add koa-better-body -S
 
 PATH: 
   C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;c:\Program Files\Mysql\mysql-8.0.16-winx64\bin;c:\altera\72\quartus\bin;C:\Program Files\nodejs\;C:\Users\Administrator\AppData\Roaming\npm
@@ -25,7 +25,9 @@ npm manifest:
     "main": "index.js",
     "dependencies": {
       "koa": "^2.11.0",
+      "koa-send": "^5.0.0",
       "koa2-cors": "^2.0.6",
+      "nodemailer": "^6.4.16",
       "socket.io": "^2.3.0"
     },
     "devDependencies": {
@@ -647,6 +649,11 @@ Lockfile:
       debug "^3.1.0"
       koa-send "^5.0.0"
   
+  koa2-cors@^2.0.6:
+    version "2.0.6"
+    resolved "https://registry.yarnpkg.com/koa2-cors/-/koa2-cors-2.0.6.tgz#9ad23df3a0b9bb84530b46f5944f3fb576086554"
+    integrity sha512-JRCcSM4lamM+8kvKGDKlesYk2ASrmSTczDtGUnIadqMgnHU4Ct5Gw7Bxt3w3m6d6dy3WN0PU4oMP43HbddDEWg==
+  
   koa@^2.11.0:
     version "2.11.0"
     resolved "https://registry.yarnpkg.com/koa/-/koa-2.11.0.tgz#fe5a51c46f566d27632dd5dc8fd5d7dd44f935a4"
@@ -767,6 +774,11 @@ Lockfile:
     version "0.6.2"
     resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.2.tgz#feacf7ccf525a77ae9634436a64883ffeca346fb"
     integrity sha512-hZXc7K2e+PgeI1eDBe/10Ard4ekbfrrqG8Ep+8Jmf4JID2bNg7NvCPOZN+kfF574pFQI7mum2AUqDidoKqcTOw==
+  
+  nodemailer@^6.4.16:
+    version "6.4.16"
+    resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-6.4.16.tgz#5cb6391b1d79ab7eff32d6f9f48366b5a7117293"
+    integrity sha512-68K0LgZ6hmZ7PVmwL78gzNdjpj5viqBdFqKrTtr9bZbJYj6BRj5W6WGkxXrEnUl3Co3CBXi3CZBUlpV/foGnOQ==
   
   object-assign@^4.0.1:
     version "4.1.1"

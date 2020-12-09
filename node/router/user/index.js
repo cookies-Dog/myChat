@@ -6,6 +6,8 @@ const redis=require('../../libs/redis');
 const jwt=require('jsonwebtoken');
 const {my_token}=require('../../config');
 const passwordLib=require('../../libs/password');
+const Email=require('../../libs/mailer');
+let check={};  //存放验证码
 
 let router=new Router();
 
@@ -194,6 +196,89 @@ router.post('/moreConversation', post(), async ctx=>{
 	let username=[user+'+'+title,title+'+'+user];
 	ctx.body=await ctx.db.query(`select * from (select id,conversation,isFriend from conversation_table where username=? or username=? \
 		order by id desc limit ?,?) a order by id`,[username[0],username[1],page,10]);
+});
+router.post('/checkPassword',post(),async ctx=>{
+	let {username,password}=ctx.request.fields;
+	let newPass=passwordLib(password);
+	ctx.body=await ctx.db.query(`select id from user_table where username=? and password=?`,[username,newPass]);
+});
+router.post('/changePassword',post(),async ctx=>{
+	let {username,password}=ctx.request.fields;
+	let newPass=passwordLib(password);
+	await ctx.db.query(`update user_table set password=? where username=?`,[newPass,username]);
+});
+
+router.post('/checkEmail',post(),async ctx=>{
+	let username=ctx.request.fields.username;
+	let rows=await ctx.db.query(`select email from user_table where username=?`,[username]);
+	let code=parseInt(Math.random(0,1)*10000);
+	if(code<1000) code+=1000;
+	check[username]=code;
+	let emails=JSON.parse(JSON.stringify(rows))[0].email; //解析JSON
+	async function timeout() {
+        return new Promise((resolve, reject) => {
+            Email.sendMail(emails, code, (state) => {
+                resolve(state);
+            });
+        })
+    }
+    await timeout().then(state => {
+        if (state) {
+            return ctx.body = "发送成功"
+        } else {
+            return ctx.body = "发送失败"
+        }
+    })
+});
+
+router.post('/checkCode',post(),async ctx=>{
+	let {username,code}=ctx.request.fields;
+	if(check[username]==code){
+		ctx.body='验证码正确';
+		delete check[username];
+	}else{
+		ctx.body='验证码错误';
+	}
+});
+
+router.post('/bindEmail',post(),async ctx=>{
+	let email=ctx.request.fields.email;
+	let code=parseInt(Math.random(0,1)*10000);
+	if(code<1000) code+=1000;
+	check[email]=code;
+	async function timeout() {
+        return new Promise((resolve, reject) => {
+            Email.sendMail(email, code, (state) => {
+                resolve(state);
+            });
+        })
+    }
+    await timeout().then(state => {
+        if (state) {
+            return ctx.body = "发送成功"
+        } else {
+            return ctx.body = "发送失败"
+        }
+    })
+});
+
+router.post('/insertEmail',post(),async ctx=>{
+	let {username,email,code,state}=ctx.request.fields;
+	if(check[email]==code && (state=='bind1'||state=='bind2')){
+		await ctx.db.query(`update user_table set email=? where username=?`,[email,username]);
+		ctx.body="验证码正确";
+		delete check[email];
+	}else if(check[email]==code && state=='mod'){
+		ctx.body="验证成功";
+		delete check[email];
+	}else{
+		ctx.body="验证码错误";
+	}
+});
+
+router.post('/setEmail',post(),async ctx=>{
+	let username=ctx.request.fields.username;
+	ctx.body=ctx.db.query(`update user_table set email=? where username=?`,['',username]);
 });
 
 module.exports=router.routes();

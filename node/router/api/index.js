@@ -80,6 +80,11 @@ router.get('/personalData', async ctx=>{
 	ctx.body=await ctx.db.query(`select * from user_table where username=?`,[username]);
 });
 
+router.get('/getEmail', async ctx=>{
+	let {username}=ctx.query;
+	ctx.body=await ctx.db.query(`select email from user_table where username=?`,[username]);
+});
+
 router.get('/111',async ctx=>{
 	ctx.body=111;
 });
