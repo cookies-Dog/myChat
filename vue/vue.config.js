@@ -11,7 +11,7 @@ module.exports={
 	},
 	devServer:{
 		port:8000,
-		proxy: 'http://192.168.43.198:8080/',
+		proxy: 'http://localhost:8080/',
 		headers: {
 			'Access-Control-Allow-Origin':'*',
 		},

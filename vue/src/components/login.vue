@@ -123,10 +123,10 @@
     margin-top:120px;font-size: 13px;text-align: center;
   }
   .mint-cell{
-    width: 95%;margin:0 auto;
+    width: 95%;height: 3rem;margin:0 auto;
   }
   .big-button{
-    margin-top: 20px;
+    margin-top: 3rem;height: 3rem !important;
   }
   .headImg{
     width: 100%;

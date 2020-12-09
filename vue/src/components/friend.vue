@@ -123,7 +123,7 @@
 			toInformation(i){
 				if(this.searchResult[i].username!=='你查找的用户不存在'){
 					let userInfo=this.searchResult[i].username+'?'+'add';
-					this.$router.push({name:'information',params:{userInfo}})
+					this.$router.push({name:'information',params:{userInfo}});
 				}
 			},
 			toInformation2(i){

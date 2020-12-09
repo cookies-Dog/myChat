@@ -71,7 +71,7 @@
 				console.log(msg)
 			}else{
 				this.friendImg=data[0].image; 
-				if(data.length>=1){  //数据加了一个照片，长度>=1
+				if(data[0].conversation){  //数据加了一个照片，长度>=1
 					data.forEach(cov=>{
 						let newUser=cov.conversation.split(':',1);
 						let newValue=cov.conversation.split(':',2)[1];
@@ -110,7 +110,7 @@
     	    	}else{
     	    		let element=document.querySelectorAll('.spaner');
     	    		element[0].style.transition=`all 0.3s ease`;
-    	    		vnode.context.a_watch=vnode.context.a_watch+1;
+    	    		vnode.context.a_watch=vnode.context.a_watch+1; //触发watch条件，无意义
     	    	}
     	    }
     	}
@@ -197,7 +197,6 @@
 									this.conversation.unshift({myconversation:newValue,isFriend:cov.isFriend});
 								}
 							});
-						  //this.scrollBoxH[1]=data.length*53;
 						}
 					}
 

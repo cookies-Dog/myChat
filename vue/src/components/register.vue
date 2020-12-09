@@ -6,29 +6,30 @@
 		<mt-tab-container>
 			<mt-tab-container-item style="margin-top: 5rem">
 				<mt-field label="用户名" placeholder="请输入用户名" v-model="form.username" @input="checkUsername()"></mt-field>
-				<div class="showError" v-if="showUserError==true">请输入4-8位(不包含中文和符号)		的用户名</div>
-      	<mt-field label="密码" placeholder="请输入密码" type="password" autocomplete="off" v-model="form.password1" @input="checkPassword()"></mt-field>
-      	<div class="showError" v-if="showPassError==true">请输入6-12位(不包含中文和符号)的密码</div>
-      	<mt-field label="密码" placeholder="请再次输入密码" type="password" v-model="form.password2"></mt-field>
-      	<mt-radio v-model="form.sex" :options="sex"></mt-radio>
-      	<mt-range v-model="form.age" :min="1" :max="90" :step="1" :bar-height="1">
-      		<div slot="start">年龄:{{form.age}}</div>
+				<div class="showError" v-if="showUserError==true">请输入4-8位(不包含中文和符号)的用户名</div>
+      			<mt-field label="密码" placeholder="请输入密码" type="password" autocomplete="off" v-model="form.password1" @input="checkPassword()"></mt-field>
+      			<div class="showError" v-if="showPassError==true">请输入6-12位(不包含中文和符号)的密码		
+      			</div>
+      			<mt-field label="密码" placeholder="请再次输入密码" type="password" v-model="form.password2"></mt-field>
+      			<mt-radio v-model="form.sex" :options="sex"></mt-radio>
+      			<mt-range v-model="form.age" :min="1" :max="90" :step="1" :bar-height="1">
+      			<div slot="start">年龄:{{form.age}}</div>
 					<div slot="end">90</div>
-        </mt-range>
-        <div class="address">
-        	<select @change="getCity()" v-model="form.province">
-        		<option disabled selected>请选择省份</option>
-        		<option v-for="province in options_1" :key="province.id">{{province.province}}</option>
-        	</select>
-        	<span class="column-f2">-</span>
-        	<select v-model="form.city">
-        		<option disabled selected>请选择城市</option>
-        		<option v-for="city in options_2" :key="city.id">{{city.city}}</option>
-        	</select>
-        </div>
-      	<mt-button type="primary" class="big-button" size="large" @click="register()" :disabled="showUserError||showPassError">注册</mt-button>
-      </mt-tab-container-item>
+        		</mt-range>
+        		<div class="address">
+        			<select @change="getCity()" v-model="form.province">
+        				<option disabled selected>请选择省份</option>
+        				<option v-for="province in options_1" :key="province.id">{{province.province}}</option>
+        			</select>
+        		<span class="column-f2">-</span>
+        			<select v-model="form.city">
+        				<option disabled selected>请选择城市</option>
+        				<option v-for="city in options_2" :key="city.id">{{city.city}}</option>
+        			</select>
+        		</div>
+      		</mt-tab-container-item>
 		</mt-tab-container>
+		<mt-button type="primary" class="big-button" size="large" @click="register()" :disabled="showUserError||showPassError">注册</mt-button>
 	</div>
 </template>
 
@@ -142,7 +143,8 @@
   .mt-range{background: white;width: 95%;margin-left: 2.5%;margin-top: 0.5rem;}
   .picker{background: white;margin-top: 0.5rem;width: 95%;margin-left: 2.5%;}
   .address{width: 95%;margin-top: 0.5rem;margin-left: 2.5%;background: white;padding-bottom: 0.5rem;}
-  .address>select{width: 40%;height: 2rem;outline: none;margin-top: 0.5rem;appearance: none;-moz-appearance: none;-webkit-appearance: none;border: 1px solid #ccc;border-radius: 0.5rem;text-align-last: center;background: white url('')}
+  .address>select{width: 40%;height: 2rem;outline: none;margin-top: 0.5rem;appearance: none;-moz-appearance: none;-webkit-appearance: none;border: 1px solid #ccc;border-radius: 0.5rem;text-align-last: center;background: white;}
 	.address .column-f2{width: 5%;height: 2rem;margin: 0.5rem 5% 0.5rem 5%;}
 	.address>select option{text-align: center;outline: none;}
+	.big-button{position: absolute;bottom:1rem;height: 3rem;}
 </style>

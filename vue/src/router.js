@@ -14,6 +14,8 @@ import friend from '@/components/friend'
 import information from '@/components/information'
 import personalData from '@/components/personalData'
 import modMessage from '@/components/modMessage'
+import changePassword from '@/components/changePassword'
+import email from '@/components/email'
 
 const router= new Router({
 	mode:'history',
@@ -32,13 +34,15 @@ const router= new Router({
 		{path:'/information/:userInfo',name:'information',component:information},
 		{path:'/personalData',name:'personalData',component:personalData},
 		{path:'/modMessage',name:'modMessage',component:modMessage},
+		{path:'/changePassword',name:'changePassword',component:changePassword},
+		{path:'/email/:emailState',name:'email',component:email},
 
 		{path:'*',redirect:'/login'}
 	]
 });
 //全局路由守卫
 router.beforeEach((to,from,next)=>{
-	const nextRouter=['message','dialog','friend','information','index','personalData'];
+	const nextRouter=['message','dialog','friend','information','index','personalData','modMessage','email'];
 	//let token=window.localStorage.getItem('token');
 	let token=sessionStorage.getItem('token');
 	if(nextRouter.indexOf(to.name)>-1){

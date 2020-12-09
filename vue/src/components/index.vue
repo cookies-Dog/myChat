@@ -15,20 +15,23 @@
 					</div>
 					</div>
 					<div class="personal-service">
-					<div class="item" v-for="item,index in personal.service" :key="index">
+					<div class="item" v-for="item,index in personal.service" :key="index"
+					@touchstart="emailBind(index)">
 						<img :src="item.img" />
-						<p class="title">{{item.title}}</p>
+						<p class="title">{{item.title}}
+							<span class="tip" v-if="index==4 && emailState==false">(未绑定邮箱)</span>
+						</p>
 					</div>
 					</div>
 				</div>
 				<div class="personal-foot">
 					<ul class="row">
-						<li>
-							<img src="../assets/imgs/set.png" width="50" height="50">
-							<p>设置</p>
+						<li @touchstart="$router.push('login')">
+							<img src="../assets/imgs/设置.png" width="50" height="50">
+							<p>退出登录</p>
 						</li>
 						<li>
-							<img src="../assets/imgs/night.png">
+							<img src="../assets/imgs/夜间模式.png">
 							<p>夜间模式</p>
 						</li>
 					</ul>
@@ -67,13 +70,16 @@
 				prev:true,
 				next:true,
 				value:'',
+				emailState:true,
 				personal:{
 					username:'',
 					signature:'',
-					service:[{img:a,title:'我的收藏'},
-								 {img:b,title:'我的相册'},
-								 {img:d,title:'我的装扮'},
-								 {img:e,title:'我的钱包'}
+					service:[
+						{img:a,title:'我的收藏'},
+						{img:b,title:'我的相册'},
+						{img:d,title:'我的装扮'},
+						{img:e,title:'我的钱包'},
+						{img:e,title:'我的邮箱'}
 					]
 				},
 				footNav:['消息','联系人','动态','游戏'],
@@ -90,6 +96,11 @@
 				console.log(msg)
 			}else{
 				if(data.length>0){
+					if(data[0].email==null){
+						this.$router.push({name:'email',params:{emailState:'bind1'}});
+					}else if(data[0].email==''){
+						this.emailState=false;
+					}
 					this.personal.username=data[0].username;
 					this.personal.signature=data[0].signature;
 					if(data[0].image){
@@ -114,6 +125,15 @@
 					allowSlideNext: this.next, 
 					//watchSlidesProgress : true,
 				});
+			},
+			async emailBind(i){
+				if(i==4){
+					if(this.emailState==true){
+						this.$router.push({name:'email',params:{emailState:'mod'}});
+					}else{
+						this.$router.push({name:'email',params:{emailState:'bind2'}});
+					}
+				}
 			}
 		}
 	}
@@ -127,5 +147,10 @@
     padding:3.75rem 0 3.0625rem 0;
     overflow:hidden;
     height: 100vh; 
+  }
+  .tip{
+  	font-size: 0.8rem;
+  	margin-left: 1rem;
+  	color: #9e9e9e;
   }
 </style>
