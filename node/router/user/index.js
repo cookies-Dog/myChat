@@ -71,9 +71,7 @@ router.post('/login', post(), async ctx=>{
 	});
 });
 router.post('/conversation',post(),async ctx=>{
-	let {message,username,friendname,leastTime}=ctx.request.fields;
-	let conversation=username+':'+message;
-	let newUsername=username+'+'+friendname;
+	let {message,username,friendname,leastTime,users}=ctx.request.fields;
 	let isFriend=null;
 	let rows=await ctx.db.query(`select id from friend_table where username=? and friendName=?`,[friendname,username]);
 	if(rows.length>0){
@@ -81,10 +79,19 @@ router.post('/conversation',post(),async ctx=>{
 	}else{
 		isFriend='no';
 	}
-	await ctx.db.query(`insert into conversation_table (username,conversation,isFriend) values (?,?,?)`,[newUsername,conversation,isFriend]);
-	await ctx.db.query(`update dialog_table set message=?,leastTime=? where username=? and title=?`,[message,leastTime,username,friendname]);
-	await ctx.db.query(`update dialog_table set message=?,leastTime=?,times=times+1 \
-	 where username=? and title=?`,[username+':'+message,leastTime,friendname,username]);
+	if(users.length==0){  //私聊
+		let conversation=username+':'+message;
+		let newUsername=username+'+'+friendname;
+		await ctx.db.query(`insert into conversation_table (username,conversation,isFriend) values (?,?,?)`,[newUsername,conversation,isFriend]);
+		await ctx.db.query(`update dialog_table set message=?,leastTime=? where username=? and title=?`,[message,leastTime,username,friendname]);
+		await ctx.db.query(`update dialog_table set message=?,leastTime=?,times=times+1 \
+	 	where username=? and title=?`,[username+':'+message,leastTime,friendname,username]);
+	}else{  //群聊
+		let conversation=friendname+':'+message;
+		await ctx.db.query(`insert into conversation_table (username,conversation,isFriend) values (?,?,?)`,[username,conversation,isFriend]);
+		await ctx.db.query(`update dialog_table set message=?,leastTime=?,times=times+1 where title=?`,[conversation,leastTime,username]);
+		await ctx.db.query(`update dialog_table set times=? where title=? and username=?`,[0,username,friendname]);
+	}
 	ctx.body=isFriend;
 });
 router.post('/initTimes',post(),async ctx=>{
@@ -103,25 +110,41 @@ router.post('/searchFriend', post(), async ctx=>{
 router.post('/getFriend', post(), async ctx=>{
 	let {user}=ctx.request.fields;
 	ctx.body=await ctx.db.query(`select friendName,friendImg,signature from \
-		friend_table where username=? and isFriend=?`,[user,'yes']);
+		friend_table where username=? and isFriend=? and isGroup=?`,[user,'yes','no']);
+});
+router.post('/getGroup', post(), async ctx=>{
+	let {user}=ctx.request.fields;
+	ctx.body=await ctx.db.query(`select friendName,friendImg,signature from \
+		friend_table where username=? and isGroup=?`,[user,'yes']);
 });
 router.post('/createDialog', post(), async ctx=>{
-	let {myName,user,userImg,friendImg,value,leastTime}=ctx.request.fields;
-	let row1=await ctx.db.query(`select id from dialog_table where username=? and title=?`,[myName,user]);
-	let row2=await ctx.db.query(`select id from dialog_table where username=? and title=?`,[user,myName]);
-	let row3=await ctx.db.query(`select id from friend_table where username=? and friendName=?`,[user,myName]);
-	if(row1.length==0){
-		await ctx.db.query(`insert into dialog_table (username,title,friendImg,message,leastTime,times) \
-			values (?,?,?,?,?,?)`,[myName,user,friendImg,value,leastTime,0]);
-	}
-	if(row2.length==0 && row3.length>0){
-		await ctx.db.query(`insert into dialog_table (username,title,friendImg,message,leastTime,times) \
-			values (?,?,?,?,?,?)`,[user,myName,userImg,myName+':'+value,leastTime,1,]);
+	let {myName,user,userImg,friendImg,value,leastTime,users}=ctx.request.fields;
+	if(users.length==0){
+		let row1=await ctx.db.query(`select id from dialog_table where username=? and title=?`,[myName,user]);
+		let row2=await ctx.db.query(`select id from dialog_table where username=? and title=?`,[user,myName]);
+		let row3=await ctx.db.query(`select id from friend_table where username=? and friendName=?`,[user,myName]);
+		if(row1.length==0){
+			await ctx.db.query(`insert into dialog_table (username,title,friendImg,message,leastTime,times) \
+				values (?,?,?,?,?,?)`,[myName,user,friendImg,value,leastTime,0]);
+		}
+		if(row2.length==0 && row3.length>0){
+			await ctx.db.query(`insert into dialog_table (username,title,friendImg,message,leastTime,times) \
+				values (?,?,?,?,?,?)`,[user,myName,userImg,myName+':'+value,leastTime,1,]);
+		}
+	}else{
+		users.forEach(async item=>{
+			let row1=await ctx.db.query(`select friendImg from friend_table where friendName=?`,[user]);
+			let row2=await ctx.db.query(`select id from dialog_table where username=? and title=?`,[item,user]);
+			if(row2.length==0){
+				await ctx.db.query(`insert into dialog_table (username,title,friendImg,message,leastTime,times) \
+				values (?,?,?,?,?,?)`,[item,user,row1[0].friendImg,myName+':'+value,leastTime,0]);
+			}
+		});
 	}
 });
 router.post('/isFriend', post(), async ctx=>{
 	let {user,friendName}=ctx.request.fields;
-	ctx.body=await ctx.db.query(`select id from friend_table where username=? and friendName=?`,[user,friendName]);
+	ctx.body=await ctx.db.query(`select friendImg from friend_table where username=? and friendName=?`,[user,friendName]);
 });
 router.post('/addFriend', post(), async ctx=>{
 	let {myName,user,friendImg,message,signature}=ctx.request.fields;
@@ -129,16 +152,16 @@ router.post('/addFriend', post(), async ctx=>{
 	if(rows.length>0){
 		ctx.body='已存在';
 	}else{
-		await ctx.db.query(`insert into friend_table (username,friendName,friendImg,message,signature,isFriend) \ 
-			values (?,?,?,?,?,?)`,[myName,user,friendImg,message,signature,'no']);
+		await ctx.db.query(`insert into friend_table (username,friendName,friendImg,message,signature,isFriend,isGroup,note) \ 
+			values (?,?,?,?,?,?,?,?)`,[myName,user,friendImg,message,signature,'no','no','']);
 	}
 });
 router.post('/agree', post(), async ctx=>{
 	let {myName,user,userImg,friendImg,signature}=ctx.request.fields;
 	let rows=await ctx.db.query(`select id from friend_table where username=? and friendName=?`,[myName,user]);
 	if(rows.length==0){
-		await ctx.db.query(`insert into friend_table (username,friendName,friendImg,isFriend,signature) \ 
-			values(?,?,?,?,?)`,[myName,user,friendImg,'yes',signature]);
+		await ctx.db.query(`insert into friend_table (username,friendName,friendImg,isFriend,signature,isGroup,note) \ 
+			values(?,?,?,?,?,?,?)`,[myName,user,friendImg,'yes',signature,'no','']);
 	}
 	await ctx.db.query(`update friend_table set isFriend=?,friendImg=? where username=? and friendName=?`,['yes',userImg,user,myName]);
 	ctx.body='ok';
@@ -171,10 +194,10 @@ router.post('/upload', ...upload({
 	}), async ctx=>{
 		let {username,userImg,sex,age,city,signature,hobby,file}=ctx.request.fields;
 		if(file!=='undefined'){
-			let imgName='upload/'+(file[0].path.split('\\',4)[3]);
+			let imgName='upload/'+(file[0].path.split('/',5)[4]);
 			let type=file[0].type.split('/',2)[1];
 			let newName=imgName+'.'+type;
-			userImg=file[0].path.split('\\',4)[3]+'.'+type;
+			userImg=file[0].path.split('/',5)[4]+'.'+type;
 			fs.renameSync(imgName,newName);
 			let rows=await ctx.db.query(`select image from user_table where username=?`,[username]);
 			if(rows.length>0 && rows[0].image!=='Elise.png') fs.unlinkSync('upload/'+rows[0].image);
@@ -185,17 +208,41 @@ router.post('/upload', ...upload({
 		let row2=await ctx.db.query(`select id from dialog_table where title=?`,[username]);
 		if(row1.length>0){
 			await ctx.db.query(`update friend_table set friendImg=?,signature=? \ 
-				where friendName=?`,[userImg,signature,username]);
+				where friendName=? and isFriend=?`,[userImg,signature,username,'yes']);
 		}
 		if(row2.length>0){
 			await ctx.db.query(`update dialog_table set friendImg=? where title=?`,[userImg,username]);
 		}		
 });
 router.post('/moreConversation', post(), async ctx=>{
-	let {user,title,page}=ctx.request.fields;
+	let {user,title,users,page}=ctx.request.fields;
 	let username=[user+'+'+title,title+'+'+user];
-	ctx.body=await ctx.db.query(`select * from (select id,conversation,isFriend from conversation_table where username=? or username=? \
-		order by id desc limit ?,?) a order by id`,[username[0],username[1],page,10]);
+	if(users.length==0){  //私聊
+		ctx.body=await ctx.db.query(`select id,conversation,isFriend from conversation_table where username=? or username=? \
+		order by id desc limit ?,?`,[username[0],username[1],page,10]);
+	}else{
+		//加载更多聊天记录需要逆序插入
+		let rows=await ctx.db.query(`select id,conversation,isFriend from conversation_table where username=? \
+		order by id desc limit ?,?`,[title,page,10]);
+		let row2={};
+		let newUser='';
+		if(rows.length>0){
+			async function test() {
+				for(let index in rows){
+					newUser=rows[index].conversation.split(':',1);
+					row2=await ctx.db.query(`select image from user_table where username=?`,[newUser]);
+					rows[index].image=row2[0].image;
+				}
+				return new Promise((resolve,reject)=>{
+					resolve(rows);
+				})
+			}
+			//等待异步处理完成
+			await test().then(rows => {
+            	return ctx.body = rows;
+    		})
+		}
+	}	
 });
 router.post('/checkPassword',post(),async ctx=>{
 	let {username,password}=ctx.request.fields;
@@ -278,7 +325,125 @@ router.post('/insertEmail',post(),async ctx=>{
 
 router.post('/setEmail',post(),async ctx=>{
 	let username=ctx.request.fields.username;
-	ctx.body=ctx.db.query(`update user_table set email=? where username=?`,['',username]);
+	ctx.body=await ctx.db.query(`update user_table set email=? where username=?`,['',username]);
+});
+
+router.post('/checkName',post(),async ctx=>{
+	let {chatName}=ctx.request.fields;
+	let row1=await ctx.db.query(`select id from user_table where username=?`,[chatName]);
+	let row2=await ctx.db.query(`select id from friend_table where friendName=?`,[chatName]);
+	if(row1.length>0 || row2.length>0){
+		ctx.body="00";
+	}else{
+		ctx.body="01";
+	}
+});
+
+router.post('/addGroup',post(),async ctx=>{
+	let {value,chatName,leastTime}=ctx.request.fields;
+	let image,signature='';
+	let row=await ctx.db.query(`select friendImg,signature from friend_table where friendName=?`,[chatName]);
+	if(row.length>0){
+		image=row[0].friendImg;
+		signature=row[0].signature;
+	}else{
+		image="Elise.png";
+		signature='这是一个新群聊';
+	}
+	value.forEach(async item=>{
+		await ctx.db.query(`insert into friend_table (username,friendName,friendImg,signature,\
+			message,isFriend,isGroup,note) values(?,?,?,?,?,?,?,?)`,[item,chatName,image,signature,'','yes','yes','']);
+		await ctx.db.query(`insert into dialog_table (username,title,friendImg,message,\
+			times,leastTime) values (?,?,?,?,?,?)`,[item,chatName,image,'',0,leastTime]);
+	});
+	ctx.body='ok';
+});
+
+router.post('/modGroupMsg', ...upload({
+	maxFileSize:512*1024,
+	sizeExceed: async ctx=>{
+		ctx.body='文件过大';
+	},
+	error: async ctx=>{
+		console.log('服务器有错');
+	}
+	}), async ctx=>{
+		let {friendname,groupName,groupSignature,groupNote,image,file}=ctx.request.fields;
+		if(file!=='undefined'){
+			//本地imgName='upload/'+(file[0].path.split('\\',4)[3]);
+			//服务器上传imgName='upload/'+(file[0].path.split('/',5)[4]);
+			let imgName='upload/'+(file[0].path.split('/',5)[4]);
+			let type=file[0].type.split('/',2)[1];
+			let newName=imgName+'.'+type;
+			image=file[0].path.split('/',5)[4]+'.'+type;
+			fs.renameSync(imgName,newName);
+			let rows=await ctx.db.query(`select friendImg from friend_table where friendName=?`,[friendname]);
+			if(rows.length>0 && rows[0].friendImg!=='Elise.png') fs.unlinkSync('upload/'+rows[0].friendImg);
+		}
+	await ctx.db.query(`update friend_table set friendName=?,friendImg=?,signature=?,note=?\
+		where friendName=?`,[groupName,image,groupSignature,groupNote,friendname]);
+	await ctx.db.query(`update dialog_table set title=?,friendImg=? where title=?`,[groupName,image,friendname]);
+});
+
+router.post('/exitGroup',post(),async ctx=>{
+	let {username,groupName}=ctx.request.fields;
+	let row=await ctx.db.query(`select id from dialog_table where username=? and title=?`,[username,groupName]);
+	if(row.length>0){
+		await ctx.db.query(`delete from dialog_table where id=?`,[row[0].id]);
+	}
+	ctx.body=await ctx.db.query(`delete from friend_table where username=? and friendName=?`,[username,groupName]);
+	//应该删除退出群聊的人的聊天信息吗？==不删
+});
+
+router.post('/delGroup',post(),async ctx=>{
+	let {groupName}=ctx.request.fields;
+	await ctx.db.query(`delete from dialog_table where title=?`,[groupName]);
+	await ctx.db.query(`delete from conversation_table where username=?`,[groupName]);
+	ctx.body=await ctx.db.query(`delete from friend_table where friendName=?`,[groupName]);
+});
+
+router.post('/changeNote',post(),async ctx=>{
+	let {friendname,note}=ctx.request.fields;
+	await ctx.db.query(`update friend_table set note=? where friendName=?`,[note,friendname]);
+});
+
+router.post('/sendImg',...upload({
+	maxFileSize:512*1024,
+	sizeExceed: async ctx=>{
+		ctx.body='文件过大';
+	},
+	error: async ctx=>{
+		console.log('服务器有错');
+	}
+	}), async ctx=>{
+		let {username,friendname,leastTime,isGroup,file}=ctx.request.fields;
+		let image='';
+		let result=[];
+		if(file!=='undefined'){
+			let imgName='upload/'+(file[0].path.split('/',5)[4]);
+			let type=file[0].type.split('/',2)[1];
+			let newName=imgName+'.'+type;
+			image=file[0].path.split('/',5)[4]+'.'+type;
+			fs.renameSync(imgName,newName);
+		}
+		result.push(image);
+		if(isGroup=='no'){
+			let conversation=username+':'+image;
+			let newUsername=username+'+'+friendname;
+			let rows=await ctx.db.query(`select isFriend from friend_table where username=? and friendName=?`,[username,friendname]);
+			result.push(rows[0].isFriend);
+			await ctx.db.query(`insert into conversation_table (username,conversation,isFriend) values (?,?,?)`,[newUsername,conversation,rows[0].isFriend]);
+			await ctx.db.query(`update dialog_table set message=?,leastTime=? where username=? and title=?`,['[图片]',leastTime,username,friendname]);
+			await ctx.db.query(`update dialog_table set message=?,leastTime=?,times=times+1 \
+	 		where username=? and title=?`,[username+':'+'[图片]',leastTime,friendname,username]);
+		}else{
+			await ctx.db.query(`insert into conversation_table (username,conversation,isFriend) values (?,?,?)`,[friendname,username+':'+image,'yes']);
+			await ctx.db.query(`update dialog_table set message=?,leastTime=?,times=times+1 \
+	 		where title=?`,[username+':'+'[图片]',leastTime,friendname]);
+	 		await ctx.db.query(`update dialog_table set times=? \
+	 		where username=? and title=?`,[0,username,friendname]);
+		}
+		ctx.body=result;
 });
 
 module.exports=router.routes();

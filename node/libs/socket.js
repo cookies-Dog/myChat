@@ -12,7 +12,7 @@ module.exports=async io=>{
 
       if(allClients.includes(socket.id)===false) return;
       socket.on('send', data=> {
-         socket.broadcast.emit('getMsg', {username:data.user,title:data.title,message:data.msg,image:data.image}); 
+         socket.broadcast.emit('getMsg', {username:data.user,title:data.title,message:data.msg,image:data.image,speak:data.speak,isImage:data.isImage}); 
       });
       socket.on('addFriend', data=>{
          socket.broadcast.emit('getMsgs', {user:data.user,message:data.msg});

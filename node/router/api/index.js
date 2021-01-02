@@ -34,28 +34,65 @@ router.get('/dialog', async ctx=>{
 });
 router.get('/conversation', async ctx=>{
 	let {title,user}=ctx.query;
-	let username=[user+'+'+title,title+'+'+user];
 	await ctx.db.query(`update dialog_table set times=? where username=? and title=?`,[0,user,title]);
-	let rows=await ctx.db.query(`select * from (select id,conversation,isFriend from conversation_table where username=? or username=? \
-		order by id desc limit 10) a order by id`,[username[0],username[1]]); //a=()的值
-	let row2=await ctx.db.query(`select image from user_table where username=?`,[title]);
-	if(rows.length>0){
-		rows[0].image=row2[0].image;
-		ctx.body=rows;
-	}else{
-		ctx.body=row2;
+	let row1=await ctx.db.query(`select friendImg,username,isGroup from friend_table where friendName=?`,[title]);
+	if(JSON.parse(JSON.stringify(row1))[0].isGroup=='yes'){ //群聊
+		//第一次渲染聊天记录需要正序插入
+		let rows=await ctx.db.query(`select * from (select id,conversation,isFriend from conversation_table where username=? \
+		order by id desc limit 10) a order by id`,[title]); //a=()的值
+		let row2={};
+		let newUser='';
+		let row3=[];
+		let row=JSON.parse(JSON.stringify(row1));
+		row.forEach(item=>{
+			row3.push(item.username);
+		});
+		if(rows.length>0){
+			async function test() {
+				for(let index in rows){
+					newUser=rows[index].conversation.split(':',1);
+					row2=await ctx.db.query(`select image from user_table where username=?`,[newUser]);
+					rows[index].image=row2[0].image;
+				}
+				return new Promise((resolve,reject)=>{
+					resolve(rows);
+				})
+			}
+			//等待异步处理完成
+			await test().then(rows => {
+				rows[0].isGroup=JSON.parse(JSON.stringify(row1))[0].isGroup;
+				rows[0].username=row3;
+            	return ctx.body = rows;
+    		})
+		}else{
+			ctx.body=[{'id':1,'image':JSON.parse(JSON.stringify(row1))[0].friendImg,isGroup:'yes',username:row3}];
+		}
+	}else{ //私聊
+		let username=[user+'+'+title,title+'+'+user];
+		let rows=await ctx.db.query(`select * from (select id,conversation,isFriend from conversation_table where username=? or username=? \
+	    order by id desc limit 10) a order by id`,[username[0],username[1]]); //a=()的值
+	    if(rows.length>0){
+	    	rows[0].image=JSON.parse(JSON.stringify(row1))[0].friendImg;
+	    	rows[0].isGroup='no';
+			ctx.body=rows;
+	    }else{
+	    	ctx.body=[{'image':JSON.parse(JSON.stringify(row1))[0].friendImg,isGroup:'no'}]
+	    }
 	}
 });
 router.get('/addFriend', async ctx=>{
 	let {myName,user}=ctx.query;
 	let count=0;
-	let rows=await ctx.db.query(`select username,image,signature,sex,city,hobby from user_table where username=?`,[user]);
-	let row2=await ctx.db.query(`select id from friend_table where username=? and friendName \
+	let rows=await ctx.db.query(`select image,sex,signature,hobby from user_table where username=?`,[user])
+	let row2=await ctx.db.query(`select id,note from friend_table where username=? and friendName \
 		=? and isFriend=?`,[myName,user,'yes']);
 	if(row2.length>0){
 		count=1;
+		rows[0].note=row2[0].note;
+	}else{
+		rows[0].count=count;
+		rows[0].note='';
 	}
-	rows[0].count=count
 	ctx.body=rows;
 });
 router.get('/getNewFriend', async ctx=>{
@@ -65,11 +102,13 @@ router.get('/getNewFriend', async ctx=>{
 });
 router.get('/getFriendCount', async ctx=>{
 	let {user}=ctx.query;
-	let row1=await ctx.db.query(`select id from friend_table where username=? and isFriend=?`,[user,'yes']);
-	let row2=await ctx.db.query(`select id from friend_table where friendName=? and isFriend=?`,[user,'no']);
+	let row1=await ctx.db.query(`select id from friend_table where username=? and isFriend=? and isGroup=?`,[user,'yes','no']);
+	let row2=await ctx.db.query(`select id from friend_table where friendName=? and isFriend=? and isGroup=?`,[user,'no','no']);
+	let row3=await ctx.db.query(`select id from friend_table where username=? and isGroup=?`,[user,'yes']);
 	let rows=[];
 	rows.push({friendCount:row1.length});
 	rows.push({newFriendCount:row2.length});
+	rows.push({groupCount:row3.length});
 	ctx.body=rows;
 });
 router.get('/provinces', async ctx=>{
@@ -83,6 +122,48 @@ router.get('/personalData', async ctx=>{
 router.get('/getEmail', async ctx=>{
 	let {username}=ctx.query;
 	ctx.body=await ctx.db.query(`select email from user_table where username=?`,[username]);
+});
+
+router.get('/getGroupMsg',async ctx=>{
+	let {title}=ctx.query;
+	let row='';
+	let rows=await ctx.db.query(`select friendImg,username,signature,note from friend_table where friendName=?`,[title]);
+	async function test(){
+		for(let index in rows){
+			row=await ctx.db.query(`select image from user_table where username=?`,[rows[index].username]);
+			rows[index].image=row[0].image
+		}
+		return new Promise((resole,reject)=>{
+			resole(rows);
+		});
+	}
+	await test().then(rows=>{
+		ctx.body=rows;
+	})
+});
+
+router.get('/others',async ctx=>{
+	let {user,groupName}=ctx.query;
+	let rows=await ctx.db.query(`select friendName,friendImg,signature from friend_table where\
+	 	username=? and isFriend=? and isGroup=?`,[user,'yes','no']);
+	let row=await ctx.db.query(`select username from friend_table where friendName=?`,[groupName]);
+	let row1=JSON.parse(JSON.stringify(row));
+	let newArray=[];
+	row1.forEach(item=>{
+		newArray.push(item.username);
+	});
+	let row3=[];
+	let row2=JSON.parse(JSON.stringify(rows));
+	//该数组在循环时，不能对其长度进行改变
+	row2.forEach((item,index)=>{
+		if(newArray.includes(rows[0].friendName)==true){
+			rows.splice(0,1);
+		}else{
+			row3.push(rows[0]);
+			rows.splice(0,1);
+		}
+	});
+	ctx.body=row3;
 });
 
 router.get('/111',async ctx=>{

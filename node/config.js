@@ -22,8 +22,12 @@ module.exports={
 	upload_dir:path.resolve(__dirname,'./upload'),
 
 	//static
+	//static_path:path.resolve(__dirname,'./static/build'),
 	static_path:path.resolve(__dirname,'./static'),
 
 	//ejs
 	ejs_path:path.resolve(__dirname,'./template'),
+
+	//服务器运行地址下的上传路径
+	server_address:'http://192.168.43.45:8080/upload/'
 };
