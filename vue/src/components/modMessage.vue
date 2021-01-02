@@ -83,8 +83,8 @@
 				formData.append('signature',this.signature);
 				formData.append('hobby',this.hobby);
 				let config = {
-            'Content-Type': 'multipart/form-data',
-        };
+            		'Content-Type': 'multipart/form-data',
+        		};
 				let {data:{data}}=await this.axios.post('upload',formData,config);
 				if(data.length>0){
 					if(data=='文件过大'){
@@ -105,7 +105,7 @@
 
 <style scoped>
    .modMessage{overflow: hidden;}
-	.m-content{width: 100%;position: absolute;top: 2.5rem;bottom: 3rem;overflow: hidden;}
+	.m-content{width: 100%;position: absolute;top: 2.5rem;bottom: 3rem;overflow: hidden;z-index: 999;}
 	.m-content ul{width: 100%;position: relative;top: 2rem;}
 	.m-content ul li{width: 100%;min-height: 2.5rem;line-height: 2.5rem;padding-left: 1rem;background: white;position: relative;margin-bottom: 0.625rem;}
 	.m-content ul li .modHeader{width:2rem;height: 1.5rem;position: absolute;top:0.5rem;right: 1rem;overflow: hidden;}

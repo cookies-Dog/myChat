@@ -14,9 +14,9 @@
 						<p class="sign">{{personal.signature}}</p>
 					</div>
 					</div>
-					<div class="personal-service">
+					<div class="personal-service" @touchmove="isJump=false">
 					<div class="item" v-for="item,index in personal.service" :key="index"
-					@touchstart="emailBind(index)">
+					@touchend="emailBind(index)">
 						<img :src="item.img" />
 						<p class="title">{{item.title}}
 							<span class="tip" v-if="index==4 && emailState==false">(未绑定邮箱)</span>
@@ -26,12 +26,12 @@
 				</div>
 				<div class="personal-foot">
 					<ul class="row">
-						<li @touchstart="$router.push('login')">
-							<img src="../assets/imgs/设置.png" width="50" height="50">
+						<li @click="exitLogin()">
+							<img src="../assets/imgs/set.png">
 							<p>退出登录</p>
 						</li>
 						<li>
-							<img src="../assets/imgs/夜间模式.png">
+							<img src="../assets/imgs/night.png">
 							<p>夜间模式</p>
 						</li>
 					</ul>
@@ -41,7 +41,7 @@
 				<div class="header">
 					<img :src="image|imgPath" @click="mySwiper(0)" alt="头像">
 					<p class="title">消息</p>
-					<i class="add"></i>
+					<img class="add" src="../assets/imgs/加号.png" @touchstart="$router.push({name:'addGroup',params:{groupName:''}})">
 				</div>
 				<div class="content">
 					<router-view />
@@ -58,10 +58,12 @@
 	import '../assets/css/swiper.css';
 	import '../assets/css/index.css';
 	import {Toast} from 'mint-ui';
-	import a from '../assets/imgs/aaa-1.png';
-	import b from '../assets/imgs/bbb-1.png';
+	import { MessageBox } from 'mint-ui';
+	import a from '../assets/imgs/collection.png';
+	import b from '../assets/imgs/photos.png';
 	import d from '../assets/imgs/decoration.png';
 	import e from '../assets/imgs/money.png';
+	import f from '../assets/imgs/email.png';
 
 	export default{
 		data(){
@@ -79,13 +81,14 @@
 						{img:b,title:'我的相册'},
 						{img:d,title:'我的装扮'},
 						{img:e,title:'我的钱包'},
-						{img:e,title:'我的邮箱'}
+						{img:f,title:'我的邮箱'}
 					]
 				},
 				footNav:['消息','联系人','动态','游戏'],
 				footIndex:0,
-				footUrl:['index','friend','#','#',]
-				}
+				footUrl:['index','friend','#','#',],
+				isJump:true
+			}
 		},
 		async created(){
 			let username=sessionStorage.getItem('username');
@@ -109,14 +112,14 @@
 				}
 			}
 			sessionStorage.setItem('userImg',this.image);
-			},
-			mounted(){
+		},
+		mounted(){
 			this.mySwiper(1);
 			if(this.$route.path=='/friend'){
 				this.footIndex=1;
 			}
-			},
-			methods:{
+		},
+		methods:{
 			mySwiper(index){
 				let mySwiper=new Swiper('.swiper-container', {
 					initialSlide: index,
@@ -127,13 +130,24 @@
 				});
 			},
 			async emailBind(i){
-				if(i==4){
+				if(i==4 && this.isJump==true){
 					if(this.emailState==true){
 						this.$router.push({name:'email',params:{emailState:'mod'}});
 					}else{
 						this.$router.push({name:'email',params:{emailState:'bind2'}});
 					}
+				}else{
+					this.isJump=true;
 				}
+			},
+			exitLogin(){
+				MessageBox.confirm('你确定要退出登陆吗？').then(action=>{
+					if(action=='confirm'){
+						this.$router.push('login')
+					}else{
+						return false
+					}
+				}).catch(()=>{});
 			}
 		}
 	}
@@ -142,15 +156,15 @@
 <style scoped>
 	.swiper-slide{
 		-webkit-box-sizing:border-box;
-    -moz-box-sizing:border-box;
-    box-sizing:border-box;
-    padding:3.75rem 0 3.0625rem 0;
-    overflow:hidden;
-    height: 100vh; 
-  }
-  .tip{
-  	font-size: 0.8rem;
-  	margin-left: 1rem;
-  	color: #9e9e9e;
-  }
+    	-moz-box-sizing:border-box;
+    	box-sizing:border-box;
+    	padding:3.75rem 0 3.0625rem 0;
+    	overflow:hidden;
+    	height: 100vh; 
+    }
+  	.tip{
+  		font-size: 0.8rem;
+  		margin-left: 1rem;
+  		color: #9e9e9e;
+  	}
 </style>

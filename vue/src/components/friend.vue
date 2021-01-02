@@ -26,6 +26,21 @@
 				</ul>
 			</div>
 			<div class="friendContent">
+				<div class="myfriend" @click="getGroup()">
+					<img src="../assets/imgs/admin2.png" alt="">
+					<p class="title">我的群聊 ({{groupCount}})</p>
+				</div>
+				<ul v-if="showGroup==true">
+					<li v-for="group,index in groups" :key="index" @touchend="toInformation4(index)">
+						<img :src="group.friendImg|imgPath" alt="好友头像">
+						<div class="message-f1">
+							<span class="f-Name">{{group.friendName}}</span>
+							<span class="P-signature">{{group.signature}}</span>
+						</div>
+					</li>
+				</ul>
+			</div>
+			<div class="friendContent">
 				<div class="myfriend" @click="getFriend()">
 					<img src="../assets/imgs/admin2.png" alt="">
 					<p class="title">我的好友 ({{friendCount}})</p>
@@ -51,10 +66,13 @@
 				searchResult:[],
 				showFriends:false,
 				showNewFriend:false,
+				showGroup:false,
 				friends:'',
+				groups:'',
 				myName:'',
 				friendCount:0,
 				newFriendCount:0,
+				groupCount:0,
 				newFriends:'',
 			}
 		},
@@ -66,6 +84,7 @@
 				if(data.length>0){
 					this.friendCount=data[0].friendCount;
 					this.newFriendCount=data[1].newFriendCount;
+					this.groupCount=data[2].groupCount;
 				}
 		},
 		sockets:{
@@ -115,6 +134,18 @@
 					}
 				}
 			},
+			async getGroup(){
+				this.showGroup=!this.showGroup;
+				let user=sessionStorage.getItem('username');
+				if(this.groups.length==0 && this.showGroup==true){
+					let {data:{data,err,msg}}=await this.axios.post('/getGroup',{user});
+					if(err){
+						console.log(msg)
+					}else{
+						if(data.length>0) this.groups=data;
+					}
+				}
+			},
 			hideResult(){
 				setTimeout(()=>{
 					this.searchResult=[];
@@ -133,6 +164,10 @@
 			toInformation3(i){
 				let userInfo=this.newFriends[i].username+'?'+'agreement';
 				this.$router.push({name:'information',params:{userInfo}});
+			},
+			toInformation4(i){
+				let title=this.groups[i].friendName;
+				this.$router.push({name:'dialog',params:{title}});
 			}
 		}
 	}
@@ -147,8 +182,8 @@
 	/* 新朋友 */
 	.newFriendContent{width: 100%;background: white;margin-top: 0.625rem;}
 	.newFriend{width: 100%;height: 3rem;position: relative;z-index: 99;}
-	.newFriend img{width: 3rem;height: 3rem;position: absolute;left: 0;}
-	.newFriend .title{position: absolute;left: 3rem;line-height: 3rem;font-weight: 500}
+	.newFriend img{width: 3rem;height: 2rem;position: absolute;left: 0.5rem;top: 0.5rem;}
+	.newFriend .title{position: absolute;left: 4rem;line-height: 3rem;font-weight: 500}
 	.newFriend .count{position: absolute;top:0.9rem;right: 1rem;width: 1.2rem;height: 1.2rem;border-radius: 50%;background: red;color: white;text-align: center;line-height: 1.2rem;}
 	.newFriendContent ul{width: 100%;}
 	.newFriendContent ul li{width: 100%;height: 3rem;padding-left: 1rem;}
@@ -160,8 +195,8 @@
 	/* 好友 */
 	.friendContent{width: 100%;background: white;}
 	.friendContent>.myfriend{width: 100%;height: 3rem;position: relative;}
-	.friendContent>.myfriend>img{width: 3rem;height: 3rem;position: absolute;left: 0;}
-	.friendContent>.myfriend .title{position: absolute;left: 3rem;line-height: 3rem;font-weight: 500}
+	.friendContent>.myfriend>img{width: 3rem;height: 2rem;position: absolute;left: 0.5rem;top: 0.5rem;}
+	.friendContent>.myfriend .title{position: absolute;left: 4rem;line-height: 3rem;font-weight: 500}
 	.friendContent>.myfriend:after{width: 3rem;height: 3rem;position: absolute;right: 0;content: '';background: url('../assets/imgs/close2.png')}
 	.friendContent ul{width: 100%;}
 	.friendContent ul li{width: 100%;height: 3rem;padding-left: 1rem;}

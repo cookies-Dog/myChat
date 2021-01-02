@@ -1,5 +1,5 @@
 module.exports={
-	publicPath:'/',
+	publicPath:'/', 
 	outputDir:'build/',
 	lintOnSave:false,
 	pages:{
