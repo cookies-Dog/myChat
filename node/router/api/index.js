@@ -7,7 +7,7 @@ let router=new Router();
 
 router.get('/index', async ctx=>{
 	//访问该路径时，留下文档，可用于统计浏览量
-	fs.appendFile('access.log',`[${new Date().toGMTString()}] ${ctx.method} ${ctx.url}\n`);
+	//fs.appendFile('access.log',`[${new Date().toGMTString()}] ${ctx.method} ${ctx.url}\n`);
 
 	let {username}=ctx.query;
 	ctx.body=await ctx.db.query(`select * from user_table where username=?`,[username]);
@@ -35,10 +35,10 @@ router.get('/dialog', async ctx=>{
 router.get('/conversation', async ctx=>{
 	let {title,user}=ctx.query;
 	await ctx.db.query(`update dialog_table set times=? where username=? and title=?`,[0,user,title]);
-	let row1=await ctx.db.query(`select friendImg,username,isGroup from friend_table where friendName=?`,[title]);
+	let row1=await ctx.db.query(`select username,isGroup from friend_table where friendName=?`,[title]);
 	if(JSON.parse(JSON.stringify(row1))[0].isGroup=='yes'){ //群聊
 		//第一次渲染聊天记录需要正序插入
-		let rows=await ctx.db.query(`select * from (select id,conversation,isFriend from conversation_table where username=? \
+		let rows=await ctx.db.query(`select * from (select id,username,conversation,isImage from conversation_table where friendName=?\
 		order by id desc limit 10) a order by id`,[title]); //a=()的值
 		let row2={};
 		let newUser='';
@@ -50,7 +50,7 @@ router.get('/conversation', async ctx=>{
 		if(rows.length>0){
 			async function test() {
 				for(let index in rows){
-					newUser=rows[index].conversation.split(':',1);
+					newUser=rows[index].username;
 					row2=await ctx.db.query(`select image from user_table where username=?`,[newUser]);
 					rows[index].image=row2[0].image;
 				}
@@ -61,22 +61,24 @@ router.get('/conversation', async ctx=>{
 			//等待异步处理完成
 			await test().then(rows => {
 				rows[0].isGroup=JSON.parse(JSON.stringify(row1))[0].isGroup;
-				rows[0].username=row3;
+				rows[0].usernames=row3;
             	return ctx.body = rows;
     		})
 		}else{
-			ctx.body=[{'id':1,'image':JSON.parse(JSON.stringify(row1))[0].friendImg,isGroup:'yes',username:row3}];
+			ctx.body=[{'id':1,'image':JSON.parse(JSON.stringify(row1))[0].friendImg,isGroup:'yes',usernames:row3}];
 		}
 	}else{ //私聊
-		let username=[user+'+'+title,title+'+'+user];
-		let rows=await ctx.db.query(`select * from (select id,conversation,isFriend from conversation_table where username=? or username=? \
-	    order by id desc limit 10) a order by id`,[username[0],username[1]]); //a=()的值
+		let row2=await ctx.db.query(`select isFriend,friendImg from friend_table where friendName=? and username=?`,[title,user]);
+		let rows=await ctx.db.query(`select * from (select id,username,conversation,isFriend,isImage from conversation_table where\
+		 (username=? and friendName=?)  or (username=? and friendName=?) order by id desc limit 10)\
+		  a order by id`,[user,title,title,user]); //a=()的值
 	    if(rows.length>0){
-	    	rows[0].image=JSON.parse(JSON.stringify(row1))[0].friendImg;
+	    	rows[0].image=JSON.parse(JSON.stringify(row2))[0].friendImg;
 	    	rows[0].isGroup='no';
+	    	rows[0].isFriends=row2[0].isFriend;
 			ctx.body=rows;
 	    }else{
-	    	ctx.body=[{'image':JSON.parse(JSON.stringify(row1))[0].friendImg,isGroup:'no'}]
+	    	ctx.body=[{'image':JSON.parse(JSON.stringify(row1))[0].friendImg,isGroup:'no',isFriends:row2[0].isFriend}]
 	    }
 	}
 });
@@ -166,7 +168,7 @@ router.get('/others',async ctx=>{
 	ctx.body=row3;
 });
 
-router.get('/111',async ctx=>{
+router.get('/login',async ctx=>{
 	ctx.body=111;
 });
 

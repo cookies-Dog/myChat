@@ -1,5 +1,6 @@
 const readline=require('readline');
 
+//创建实例
 let rl=readline.createInterface({
 	input: process.stdin,
 	output: process.stdout
