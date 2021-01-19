@@ -3,7 +3,7 @@
 		<div class="swiper-wrapper">
 			<div class="swiper-slide" @touchstart="prev=false" @touchend.once="mySwiper(0)">
 				<div class="personal-header">
-					<img src="../assets/imgs/home.png" alt="">
+					<img src="../../assets/imgs/home.png" alt="">
 					<p>个人中心</p>
 				</div>
 				<div class="personalContent">
@@ -27,11 +27,11 @@
 				<div class="personal-foot">
 					<ul class="row">
 						<li @click="exitLogin()">
-							<img src="../assets/imgs/set.png">
+							<img src="../../assets/imgs/set.png">
 							<p>退出登录</p>
 						</li>
 						<li>
-							<img src="../assets/imgs/night.png">
+							<img src="../../assets/imgs/night.png">
 							<p>夜间模式</p>
 						</li>
 					</ul>
@@ -41,7 +41,7 @@
 				<div class="header">
 					<img :src="image|imgPath" @click="mySwiper(0)" alt="头像">
 					<p class="title">消息</p>
-					<img class="add" src="../assets/imgs/加号.png" @touchstart="$router.push({name:'addGroup',params:{groupName:''}})">
+					<img class="add" src="../../assets/imgs/加号.png" @touchstart="$router.push({name:'addGroup',params:{groupName:'添加群聊'}})">
 				</div>
 				<div class="content">
 					<router-view />
@@ -54,16 +54,16 @@
 	</div>
 </template>
 <script type="text/javascript">
-	import Swiper from '../assets/js/swiper.min.js';
-	import '../assets/css/swiper.css';
-	import '../assets/css/index.css';
+	import Swiper from '../../assets/js/swiper.min.js';
+	import '../../assets/css/swiper.css';
+	import '../../assets/css/index.css';
 	import {Toast} from 'mint-ui';
 	import { MessageBox } from 'mint-ui';
-	import a from '../assets/imgs/collection.png';
-	import b from '../assets/imgs/photos.png';
-	import d from '../assets/imgs/decoration.png';
-	import e from '../assets/imgs/money.png';
-	import f from '../assets/imgs/email.png';
+	import a from '../../assets/imgs/collection.png';
+	import b from '../../assets/imgs/photos.png';
+	import d from '../../assets/imgs/decoration.png';
+	import e from '../../assets/imgs/money.png';
+	import f from '../../assets/imgs/email.png';
 
 	export default{
 		data(){

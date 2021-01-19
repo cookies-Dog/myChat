@@ -9,23 +9,23 @@ import router from './router'
 
 import 'mint-ui/lib/style.css'
 
-Vue.filter('imgPath',val=>{  //过滤器
-	return 'http://192.168.43.45:8000/upload/'+val;
-});
+const baseUrl=process.env.NODE_ENV=='development'? 'http://192.168.43.45:8000':'http://106.52.81.149/mobile';
+const socketUrl=process.env.NODE_ENV=='development'? 'http://192.168.43.45:8080':'http://106.52.81.149';
 
-//本地：http://192.168.43.45:8000/ localhost:8000
-//服务器：http://106.52.81.149/mobile/
+Vue.filter('imgPath',val=>{  //过滤器
+	return baseUrl+'/upload/'+val;
+});
 
 Vue.config.productionTip = false
 
 Vue.use(Mint);  //使用mint-ui组件
 
-axios.defaults.baseURL = 'http://192.168.43.45:8000/'; //默认请求路径
+axios.defaults.baseURL = baseUrl; //默认请求路径
 Vue.use(VueAxios,axios);
 
 Vue.use(new VueSocketIo({
 	debug: false,
-	connection:'http://localhost:8080',  //与服务器端口一致
+	connection:socketUrl,  //与服务器端口一致
 }));
 
 new Vue({

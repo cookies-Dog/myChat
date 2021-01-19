@@ -13,6 +13,13 @@
 					<div class="friendContainer" v-if="item.conversation">
 						<!-- 朋友发言 -->
 						<img :src="(isGroup=='no'?friendImg:item.image)|imgPath" alt="">
+						<div class="userInfo" v-if="isGroup=='yes'">
+							<span class="identity" :class="{active:item.username==groupManager}">
+								{{item.username==groupManager?'群主':'群员'}}
+								<!-- {{item.username}},{{groupManager}} -->
+							</span>
+							<span class="name">{{item.username}}</span>
+						</div>
 						<div class="dialog">
 							<span v-if="item.isImage==false">{{item.conversation}}</span>
 							<span v-else>
@@ -24,6 +31,12 @@
 						<div class="myContainer" v-if="item.myconversation">
 							<!-- 用户发言 -->
 							<img :src="userImg|imgPath" alt="">
+							<div class="userInfo" v-if="isGroup=='yes'">
+								<span class="identity" :class="{active:groupManager==user}">
+									{{isGroupManager}}
+								</span>
+								<span class="name">我</span>
+							</div>
 							<div class="dialog">
 								<span class="sendError" v-if="item.isFriend=='no'">！</span>
 								<span v-if="item.isImage==false">{{item.myconversation}}</span>
@@ -38,8 +51,15 @@
 		</div>
 		<div class="output">
 			<div class="sendImg">
-				<img src="../assets/imgs/add.png">
-				<input type="file" accept="image/*" ref="image" @change="sendImg()" @change.once="createDialog()">
+				<img src="../../assets/imgs/add.png">
+				<input 
+					type="file" 
+					accept="image/*"  
+					ref="image" 
+					multiple="mutiple" 
+					@change="sendImg()" 
+					@change.once="createDialog()"
+				>
 			</div>
 			<input type="text" v-model="value" @keydown.enter="sendMessage()" />
 			<button class="primary" :disabled="!value" @click="sendMessage(),vScroll=true" @click.once="createDialog()">发送</button>
@@ -61,7 +81,7 @@
 				friendImg:'',
 				friendWordLength:0,
 				newFWl:0,
-				isFriend:[],
+				isFriend:'yes',
 				startY:'',
 				distanceY:'',
 				scrollBoxH:'',
@@ -69,7 +89,7 @@
 				a_watch:0,
 				isGroup:null,
 				users:[],
-				imgType:['png','jpg','jpeg','jpx','gif']
+				groupManager:null
 			}
 		},
 		async created(){
@@ -86,33 +106,31 @@
 			}else{
 				this.isGroup=data[0].isGroup;
 				if(this.isGroup=='yes' && data[0].id){  //群聊时和群聊消息大于等于1条
-					this.users=data[0].username;
+					this.users=data[0].usernames;
+					this.groupManager=data[0].usernames[0];
 				}else{
 					this.friendImg=data[0].image;
+					this.isFriend=data[0].isFriends;
 				} 
 				if(data[0].conversation){ 
 					data.forEach(cov=>{
-						let newUser=cov.conversation.split(':',1);
-						let newValue=cov.conversation.split(':',2)[1];
-						let isImage=newValue.split('.',2)[1];
-						if(isImage!==undefined && this.imgType.includes(isImage)==true){
-							cov.isImage=true;
-						}else{
-							cov.isImage=false;
+						let isImage=false;
+						if(cov.isImage!==undefined && cov.isImage=='yes'){
+							isImage=true;
 						}
 						//自己发言部分
-						if(newUser==this.user){
-							this.conversation.push({myconversation:newValue,isFriend:cov.isFriend,isImage:cov.isImage});
+						if(cov.username==this.user){
+							this.conversation.push({myconversation:cov.conversation,isFriend:cov.isFriend,isImage});
 						}
 						//朋友发言部分
 						if(this.isGroup=='no'){  //私聊
-							if(newUser==this.title && cov.isFriend!=='no'){
-								this.conversation.push({conversation:newValue,isImage:cov.isImage});
+							if(cov.username==this.title && cov.isFriend!=='no'){
+								this.conversation.push({conversation:cov.conversation,isImage});
 								this.friendWordLength++;
 							}
-						}else{
-							if(newUser==this.user) return;
-							this.conversation.push({conversation:newValue,image:cov.image,isImage:cov.isImage})
+						}else{  //群聊
+							if(cov.username==this.user) return;
+							this.conversation.push({username:cov.username,conversation:cov.conversation,image:cov.image,isImage})
 							this.friendWordLength++;	
 						}
 					});
@@ -134,7 +152,7 @@
 					}
 				}else{  //群聊
 					if(this.title==data.title){
-						this.conversation.push({conversation:data.message,image:data.image,isImage:data.isImage});
+						this.conversation.push({username:data.speak,conversation:data.message,image:data.image,isImage:data.isImage});
 						this.newFWl++;
 					}
 				}
@@ -162,39 +180,30 @@
 		methods:{
 			async sendMessage(){
 				let newDate=new Date().getTime();
-				//私聊
-				if(this.isGroup=='no'){
-					this.$socket.emit('send',{user:this.user,title:this.title,msg:this.value,image:this.userImg,speak:this.user,isImage:false}); 
-					let {data:{data,err,msg}}=await this.axios.post('/conversation',{
-						message:this.value,
-						username:this.user,
-						friendname:this.title,
-						leastTime:newDate,
-						users:this.users
-					});
-					if(data.length>0){
-						if(data=='no'){
-							this.conversation.push({myconversation:this.value,isFriend:'no',isImage:false});
-						}else{
-							this.conversation.push({myconversation:this.value,isImage:false});
-						}
-					}
+				if(this.isGroup=='no'){ //私聊
+					this.$socket.emit('send',{
+						user:this.user,
+						title:this.title,
+						msg:this.value,
+						image:this.userImg,
+						speak:this.user,
+						isImage:false,
+						isFriend:this.isFriend,
+						leastTime:newDate
+					}); 
+					this.conversation.push({myconversation:this.value,isImage:false});
 				}else{  //群聊
-					this.$socket.emit('send',{user:this.users,title:this.title,msg:this.value,image:this.userImg,speak:this.user,isImage:false});
-					let {data:{data,err,msg}}=await this.axios.post('/conversation',{
-						message:this.value,
-						username:this.title,
-						friendname:this.user,
+					this.$socket.emit('send',{
+						user:this.users,
+						title:this.title,
+						msg:this.value,
+						image:this.userImg,
+						speak:this.user,
+						isImage:false,
 						leastTime:newDate,
-						users:this.users
+						isFriend:'yes'
 					});
-					if(data.length>0){
-						if(data=='no'){
-							this.conversation.push({myconversation:this.value,isFriend:'no',isImage:false});
-						}else{
-							this.conversation.push({myconversation:this.value,isImage:false});
-						}
-					}
+					this.conversation.push({myconversation:this.value,isImage:false});
 				}
 				setTimeout(()=>{
 					this.value='';
@@ -240,36 +249,48 @@
 				}
 			},
 			async sendImg(){
-				let newDate=new Date().getTime();
-				let formData=new FormData();
-				formData.append('file',this.$refs.image.files[0]);
-				formData.append('username',this.user);
-				formData.append('friendname',this.title);
-				formData.append('leastTime',newDate);
-				formData.append('isGroup',this.isGroup);
-				let config = {
-            		'Content-Type': 'multipart/form-data',
-        		};
-				let {data:{data}}=await this.axios.post('sendImg',formData,config);
-				if(data=='文件过大'){
+				let size=(this.$refs.image.files[0].size)/(1024*1024);
+				if(size>3){
 					Toast({
-						message:'图片过大，请重新选择',
+						message:'图片不能大于3m',
 						position: 'middle',
-						duration: 1000
+						duration: 1500
 					});
 				}else{
-					if(this.isGroup=='no'){
-						this.$socket.emit('send',{user:this.user,title:this.title,msg:data[0],image:this.userImg,speak:this.user,isImage:true});
-						if(data[1]=='no'){
-							this.conversation.push({myconversation:data[0],isFriend:'no',isImage:true});
+					let newDate=new Date().getTime();
+					let formData=new FormData();
+					formData.append('file',this.$refs.image.files[0]);
+					// let config = {
+    				// 		'Content-Type': 'multipart/form-data',
+    				// };
+					let {data:{data}}=await this.axios.post('sendImg',formData);
+					if(data){
+						if(this.isGroup=='no'){
+							this.$socket.emit('send',{
+								user:this.user,
+								title:this.title,
+								msg:data,
+								image:this.userImg,
+								speak:this.user,
+								isImage:true,
+								isFriend:this.isFriend,
+								leastTime:newDate
+							});
 						}else{
-							this.conversation.push({myconversation:data[0],isImage:true});
+							this.$socket.emit('send',{
+								user:this.users,
+								title:this.title,
+								msg:data,
+								image:this.userImg,
+								speak:this.user,
+								isImage:true,
+								isFriend:this.isFriend,
+								leastTime:newDate
+							})
 						}
-					}else{
-						this.$socket.emit('send',{user:this.users,title:this.title,msg:data[0],image:this.userImg,speak:this.user,isImage:true});
-						this.conversation.push({myconversation:data[0],isImage:true});
-					}
-				}
+						this.conversation.push({myconversation:data,isImage:true});
+					}	
+				}	
 			},
 			touchStart(e){
 				if(this.$refs.refash.scrollTop>0) return;
@@ -305,24 +326,20 @@
 
 						if(data!=='data not found'){
 							data.forEach(cov=>{
-								let newUser=cov.conversation.split(':',1);
-								let newValue=cov.conversation.split(':',2)[1];
-								let isImage=newValue.split('.',2)[1];
-								if(isImage!==undefined && this.imgType.includes(isImage)==true){
-									cov.isImage=true;
-								}else{
-									cov.isImage=false;
+								let isImage=false;
+								if(cov.isImage!==undefined && cov.isImage=='yes'){
+									isImage=true;
 								}
-								if(newUser==this.user){
-									this.conversation.unshift({myconversation:newValue,isFriend:cov.isFriend,isImage:cov.isImage});
+								if(cov.username==this.user){
+									this.conversation.unshift({myconversation:cov.conversation,isFriend:cov.isFriend,isImage});
 								}
 								if(this.isGroup=='no'){
-									if(newUser==this.title && cov.isFriend!=='no'){
-										this.conversation.unshift({conversation:newValue,isImage:cov.isImage});
+									if(cov.username==this.title && cov.isFriend!=='no'){
+										this.conversation.unshift({username:cov.username,conversation:cov.conversation,isImage});
 									}
 								}else{
-									if(newUser==this.user) return;
-									this.conversation.unshift({conversation:newValue,image:cov.image,isImage:cov.isImage});
+									if(cov.username==this.user) return;
+									this.conversation.unshift({username:cov.username,conversation:cov.conversation,image:cov.image,isImage});
 								}
 							});
 						}
@@ -348,6 +365,9 @@
 						bottom:0
 					}
 				}
+			},
+			isGroupManager(){
+				return this.groupManager==this.user?'群主':'群员';
 			}
 		}
 	}
@@ -356,22 +376,29 @@
 
 <style scoped>
 	.spaner{padding: 0 45.625%;margin-top: -2rem;}
+	.userInfo{position: relative;top:-3.5rem;left: 0;}
+	.userInfo .active{background: #d62d2d !important;}
 	.f-content{width: 100%;position: absolute;top: 40px;bottom:3.125rem;overflow-y: auto;overflow-x: hidden;padding-top: 0.25rem;}
 	.f-content::-webkit-scrollbar{display: none;}
 	.f-content ul{width: 100%;}
 	.f-content li{width: 100%;}
 	.f-content li .friendContainer> img{width: 2.5rem;height: 2.5rem;border-radius: 50%;margin: 0.5rem;}
-	.f-content li .friendContainer> .dialog{width: 11rem;margin-top: -3rem;margin-left: 3.5rem;}
-	.f-content li .friendContainer>.dialog span{max-width: 10rem;word-wrap:break-word;background: white;display: inline-block;border-radius: 1rem;padding: 0.5rem;font-size: 0.9rem;min-height: 1rem;min-width: 0.5rem;overflow-x: auto;}
-	.f-content li .friendContainer>.dialog span::-webkit-scrollbar{display: none;}
-	.f-content li .friendContainer>.dialog span>img{height: 6rem;}
+	.f-content li .friendContainer .userInfo>.identity{background: #3ada2f;display: inline;font-size: 0.5rem;padding: 1px;color: white;border-radius: 2px;margin-left: 3.5rem;}
+	.f-content li .friendContainer .userInfo .name{font-size: 0.6rem;color: #5f5c5c;margin-left: 0.5rem;}
+	.f-content li .friendContainer .dialog{width: 11rem;margin-top: -3.25rem;margin-left: 3.5rem;}
+	.f-content li .friendContainer .dialog span{max-width: 10rem;word-wrap:break-word;background: white;display: inline-block;border-radius: 0.5rem;padding: 0.5rem;font-size: 0.9rem;min-height: 1rem;min-width: 0.5rem;overflow-x: auto;}
+	.f-content li .friendContainer .dialog span::-webkit-scrollbar{display: none;}
+	.f-content li .friendContainer .dialog span>img{height: 6rem;}
+	/* 用户发言 */
 	.f-content li .myContainer{text-align: right;}
 	.f-content li .myContainer> img{width: 2.5rem;height: 2.5rem;border-radius: 50%;margin: 0.5rem;}
-	.f-content li .myContainer> .dialog{margin-top: -3rem;position: relative;right: 3.5rem;}
-	.f-content li .myContainer>.dialog span{max-width: 10rem;word-wrap:break-word;background: #3ed444;display: inline-block;border-radius: 1rem;padding: 0.5rem;font-size: 0.9rem;min-height: 1rem;min-width: 0.5rem;text-align: left;overflow-x: auto;}
-	.f-content li .myContainer>.dialog span::-webkit-scrollbar{display: none;}
-	.f-content li .myContainer>.dialog span>img{height: 6rem;}
-	.f-content li .myContainer> .dialog .sendError{background: #f0f0f0;color: red;}
+	.f-content li .myContainer .userInfo>.identity{background: #3ada2f;display: inline;font-size: 0.5rem;padding: 1px;color: white;border-radius: 2px;margin-right: 0.5rem;}
+	.f-content li .myContainer .userInfo .name{font-size: 0.6rem;color: #5f5c5c;margin-right: 3.5rem;}
+	.f-content li .myContainer .dialog{margin-top: -3.25rem;position: relative;right: 3.5rem;}
+	.f-content li .myContainer .dialog span{max-width: 10rem;word-wrap:break-word;background: #3ed444;display: inline-block;border-radius: 0.5rem;padding: 0.5rem;font-size: 0.9rem;min-height: 1rem;min-width: 0.5rem;text-align: left;overflow-x: auto;}
+	.f-content li .myContainer .dialog span::-webkit-scrollbar{display: none;}
+	.f-content li .myContainer .dialog span>img{height: 6rem;}
+	.f-content li .myContainer .dialog .sendError{background: #f0f0f0;color: red;}
 	.output{width: 100%;height: 3.125rem;position: absolute;bottom: 0;border-top: 1px solid #ded9d9;}
 	.output input{width: 65%;height: 2rem;margin-top: 0.625rem;border-radius: 0.5rem;margin-left: 2.5rem;line-height: 2rem;}
 	.output .primary{width: 3rem;height: 2rem;background: #7cbff1;position: absolute;right: 0.5rem;outline: none;border-radius: 0.5rem;border: none;margin-top: 0.625rem;}

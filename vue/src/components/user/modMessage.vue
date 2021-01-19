@@ -73,31 +73,38 @@
 		},
 		methods:{
 			async modMessage(){
-				let formData=new FormData();
-				formData.append('file',this.$refs.image.files[0]);
-				formData.append('username',this.username);
-				formData.append('userImg',this.userImg);
-				formData.append('sex',this.sex);
-				formData.append('age',this.age);
-				formData.append('city',this.city);
-				formData.append('signature',this.signature);
-				formData.append('hobby',this.hobby);
-				let config = {
-            		'Content-Type': 'multipart/form-data',
-        		};
-				let {data:{data}}=await this.axios.post('upload',formData,config);
-				if(data.length>0){
-					if(data=='文件过大'){
-						alert(`${data}`)
-					}else{
+				let size=(this.$refs.image.files[0].size)/(1024*1024);
+				if(size>3){
+					Toast({
+						message:'上传图片不能超过3m',
+						position: 'middle',
+						duration: 1500
+					});
+				}else{
+					let formData=new FormData();
+					formData.append('file',this.$refs.image.files[0]);
+					formData.append('username',this.username);
+					formData.append('userImg',this.userImg);
+					formData.append('sex',this.sex);
+					formData.append('age',this.age);
+					formData.append('city',this.city);
+					formData.append('signature',this.signature);
+					formData.append('hobby',this.hobby);
+					let config = {
+            			'Content-Type': 'multipart/form-data',
+        			};
+					let {data:{data}}=await this.axios.post('upload',formData,config);
+					if(data){
 						Toast({
 							message:'修改成功',
 							position: 'middle',
 							duration: 1000
 						});
+
 						this.$router.push('/personalData');
 					}
 				}
+				
 			}
 		}
 	}
@@ -109,7 +116,7 @@
 	.m-content ul{width: 100%;position: relative;top: 2rem;}
 	.m-content ul li{width: 100%;min-height: 2.5rem;line-height: 2.5rem;padding-left: 1rem;background: white;position: relative;margin-bottom: 0.625rem;}
 	.m-content ul li .modHeader{width:2rem;height: 1.5rem;position: absolute;top:0.5rem;right: 1rem;overflow: hidden;}
-	.m-content ul li .modHeader:after{width: 1rem;height: 1.5rem;position: absolute;top: 6px;left: 0.625rem;content: '';background:url('../assets/imgs/sprite-img.png') -1966px -76px no-repeat;zoom: 1.2;}
+	.m-content ul li .modHeader:after{width: 1rem;height: 1.5rem;position: absolute;top: 6px;left: 0.625rem;content: '';background:url('../../assets/imgs/sprite-img.png') -1966px -76px no-repeat;zoom: 1.2;}
 	.m-content ul li .file{width:73%;opacity: 0;position: absolute;top: 0.5rem;left: 4rem;z-index: 999;}
 	.m-content ul li .text{width:50%;height: 2.4rem;position: absolute;top: 0;left: 5rem;}
 	.m-foot{width: 100%;position: fixed;bottom: 0;height: 3rem;}

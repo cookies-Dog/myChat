@@ -1,15 +1,15 @@
 <template>
 	<div>
-		<mt-header fixed title="建立群聊">
+		<mt-header fixed :title="title">
 			<mt-button icon="back" slot="left" @click="$router.back()">返回</mt-button>
 		</mt-header>
 		<div class="title">
-			<mt-field label="群聊名称" placeholder="请输入不重复名称" @change="checkName()" v-model="chatName" :disabled="groupName!==''"></mt-field>
+			<mt-field label="群聊名称" placeholder="请输入不重复名称" @change="checkName()" v-model="chatName" :disabled="groupName!=='添加群聊'"></mt-field>
 		</div>
 		<div class="friendContent">
 			<div class="myFriend">
-				<img src="../assets/imgs/admin2.png" alt="">
-				<p class="title2">{{groupName==''?'我的好友':'可添加好友'}}</p>
+				<img src="../../assets/imgs/admin2.png" alt="">
+				<p class="title2">{{groupName=='添加群聊'?'我的好友':'可添加好友'}}</p>
 			</div>
 			<ul>
 				<li v-for="item,index in friends">
@@ -23,7 +23,7 @@
 				</li>
 			</ul>
 		</div>
-		<mt-button class="createDialog" size="large" type="primary" :disabled="name==false || !value.length" @click.once="addGroup()">{{groupName==''?'创建群聊':'确认添加'}}</mt-button>
+		<mt-button class="createDialog" size="large" type="primary" :disabled="name==false || !value.length" @click.once="addGroup()">{{groupName=='添加群聊'?'创建群聊':'确认添加'}}</mt-button>
 	</div>
 </template>
 
@@ -37,12 +37,12 @@
 				name:false,
 				friends:'',
 				username:'',
-				groupName:''
+				groupName:this.$route.params.groupName
 			}
 		},
 		async created(){
 			this.username=sessionStorage.getItem('username');
-			if(this.$route.params.groupName==''){
+			if(this.$route.params.groupName=='添加群聊'){
 				let {data:{data,err,msg}}=await this.axios.post('/getFriend',{
 					user:this.username
 				});
@@ -50,9 +50,8 @@
 					this.friends=data;
 				}
 			}else{
-				this.groupName=this.$route.params.groupName;
 				this.name=true;
-				this.chatName=this.$route.params.groupName;
+				this.chatName=this.groupName;
 				let {data:{data}}=await this.axios.get('api/others',{
 					params:{
 						user:this.username,
@@ -66,21 +65,31 @@
 		},
 		methods:{
 			async checkName(){
-				let {data:{data}}=await this.axios.post('checkName',{
-					chatName:this.chatName
-				});
-				if(data=='00'){
+				if(this.chatName=='查找好友' || this.chatName=='添加群聊'){
 					Toast({
-						message: '此名称已注册，请重新输入',
+						message: '此名称不符合规定，请重新输入',
 						position: 'middle',
 						duration: 1500
 					})
 				}else{
-					this.name=true;
+					let {data:{data}}=await this.axios.post('checkName',{
+						chatName:this.chatName
+					});
+					if(data=='00'){
+						Toast({
+							message: '此名称已注册，请重新输入',
+							position: 'middle',
+							duration: 1500
+						})
+					}else{
+						this.name=true;
+					}
 				}
 			},
 			async addGroup(){
-				if(this.groupName=='')this.value.unshift(this.username);
+				if(this.groupName=='添加群聊'){
+					this.value.unshift(this.username);
+				}
 				let newDate=new Date().getTime();
 				let {data:{data}}=await this.axios.post('addGroup',{
 					value:this.value,
@@ -88,7 +97,7 @@
 					leastTime:newDate
 				});
 				if(data=='ok'){
-					let message=this.groupName==''? '创建成功':'添加成功'
+					let message=this.groupName=='添加群聊'? '创建成功':'添加成功'
 					Toast({
 						message,
 						position: 'middle',
@@ -96,6 +105,11 @@
 					});
 					this.$router.push('/index');
 				}
+			}
+		},
+		computed:{
+			title(){
+				return this.$route.params.groupName=='添加群聊'? '建立群聊':'添加好友'
 			}
 		}
 	}
@@ -129,7 +143,7 @@
 	.friendContent .myFriend>.title2{
 		position: absolute;left: 4rem;line-height: 3rem;font-weight: 500;
 	}
-	.friendContent>.myFriend:after{width: 3rem;height: 3rem;position: absolute;right: 0;content: '';background: url('../assets/imgs/close2.png')}
+	.friendContent>.myFriend:after{width: 3rem;height: 3rem;position: absolute;right: 0;content: '';background: url('../../assets/imgs/close2.png')}
 	.friendContent ul{width: 100%;overflow: hidden;}
 	.friendContent ul li{width: 100%;height: 3rem;}
 	.friendContent ul li input[type=checkbox]{visibility:hidden;width: 1.8rem;margin-top: 0.6rem;}

@@ -3,21 +3,22 @@ import Router from 'vue-router'
 
 Vue.use(Router);
 import {Toast} from 'mint-ui'
-import login from '@/components/login'
-import forget from '@/components/forget'
-import register from '@/components/register'
-import agreement from '@/components/agreement'
-import index from '@/components/index'
-import message from '@/components/message'
-import dialog from '@/components/dialog'
-import friend from '@/components/friend'
-import information from '@/components/information'
-import personalData from '@/components/personalData'
-import modMessage from '@/components/modMessage'
-import changePassword from '@/components/changePassword'
-import email from '@/components/email'
-import addGroup from '@/components/addGroup.vue'
-import modGroupMsg from '@/components/modGroupMsg.vue'
+import login from '@/components/user/login'
+import forget from '@/components/user/forget'
+import register from '@/components/user/register'
+import agreement from '@/components/user/agreement'
+import index from '@/components/user/index'
+import message from '@/components/user/message'
+import dialog from '@/components/user/dialog'
+import friend from '@/components/user/friend'
+import information from '@/components/user/information'
+import personalData from '@/components/user/personalData'
+import modMessage from '@/components/user/modMessage'
+import changePassword from '@/components/user/changePassword'
+import email from '@/components/user/email'
+import addGroup from '@/components/user/addGroup'
+import modGroupMsg from '@/components/user/modGroupMsg'
+import searchFriend from '@/components/user/searchFriend'
 
 const router= new Router({
 	mode:'history',
@@ -40,6 +41,7 @@ const router= new Router({
 		{path:'/email/:emailState',name:'email',component:email},
 		{path:'/addGroup/:groupName',name:'addGroup',component:addGroup},
 		{path:'/modGroupMsg/:groupName',name:'modGroupMsg',component:modGroupMsg},
+		{path:'/searchFriend/:friendName',name:'searchFriend',component:searchFriend},
 
 
 		{path:'*',redirect:'/login'}
@@ -47,7 +49,8 @@ const router= new Router({
 });
 //全局路由守卫
 router.beforeEach((to,from,next)=>{
-	const nextRouter=['message','dialog','friend','information','index','personalData','modMessage','email','addGroup','modGroupMsg'];
+	const nextRouter=['message','dialog','friend','information','index',
+	'personalData','modMessage','email','addGroup','modGroupMsg','searchFriend'];
 	//let token=window.localStorage.getItem('token');
 	let token=sessionStorage.getItem('token');
 	if(nextRouter.indexOf(to.name)>-1){
@@ -60,6 +63,7 @@ router.beforeEach((to,from,next)=>{
 			})
 		}
 	}
+	//满足条件放行
 	next()
 });
 

@@ -1,17 +1,11 @@
 <template>
 	<div class="middle-container">
 			<div class="row1">
-				<input type="text" placeholder="请搜索用户名" @input="searchUser()" v-model="searchUsername" @mouseout="hideResult()" />
-				<ul class="username" v-if="searchResult.length>0">
-					<li v-for="item,index in searchResult" :key="index" :class="{active:item.username==searchUsername}" @click="toInformation(index)">
-						<img :src="item.image|imgPath" alt="">
-						<p>{{item.username}}</p>
-					</li>
-				</ul>
+				<input type="text" placeholder="点击搜索" @focus="isJump()">
 			</div>
 			<div class="newFriendContent">
 				<div class="newFriend" @touchstart="getNewFriend()">
-					<img src="../assets/imgs/admin2.png" alt="">
+					<img src="../../assets/imgs/admin2.png" alt="">
 					<p class="title">新朋友</p>
 					<span class="count" v-if="newFriendCount>0">{{newFriendCount}}</span>
 				</div>
@@ -27,7 +21,7 @@
 			</div>
 			<div class="friendContent">
 				<div class="myfriend" @click="getGroup()">
-					<img src="../assets/imgs/admin2.png" alt="">
+					<img src="../../assets/imgs/admin2.png" alt="">
 					<p class="title">我的群聊 ({{groupCount}})</p>
 				</div>
 				<ul v-if="showGroup==true">
@@ -42,7 +36,7 @@
 			</div>
 			<div class="friendContent">
 				<div class="myfriend" @click="getFriend()">
-					<img src="../assets/imgs/admin2.png" alt="">
+					<img src="../../assets/imgs/admin2.png" alt="">
 					<p class="title">我的好友 ({{friendCount}})</p>
 				</div>
 				<ul v-if="showFriends==true">
@@ -62,8 +56,6 @@
 	export default{
 		data(){
 			return{
-				searchUsername:'',
-				searchResult:[],
 				showFriends:false,
 				showNewFriend:false,
 				showGroup:false,
@@ -95,22 +87,8 @@
 			}
 		},
 		methods:{
-			async searchUser(){
-				if(this.searchUsername.length>0){
-					let {data:{data,err,msg}}=await this.axios.post('/searchFriend',{
-						friendname:this.searchUsername
-					});
-					if(err){
-						console.log(msg)
-					}else{
-						if(data=='你查找的用户不存在'){
-							this.searchResult=[];
-							this.searchResult.push({username:data})
-						}else{
-							this.searchResult=data;
-						}
-					}
-				}
+			isJump(){
+				this.$router.push({name:'searchFriend',params:{friendName:'查找好友'}});
 			},
 			async getNewFriend(){  
 				this.showNewFriend=!this.showNewFriend;
@@ -146,17 +124,6 @@
 					}
 				}
 			},
-			hideResult(){
-				setTimeout(()=>{
-					this.searchResult=[];
-				},100);
-			},
-			toInformation(i){
-				if(this.searchResult[i].username!=='你查找的用户不存在'){
-					let userInfo=this.searchResult[i].username+'?'+'add';
-					this.$router.push({name:'information',params:{userInfo}});
-				}
-			},
 			toInformation2(i){
 				let userInfo=this.friends[i].friendName+'?'+'add';
 				this.$router.push({name:'information',params:{userInfo}});
@@ -174,11 +141,6 @@
 </script>
 
 <style scoped>
-	.username{width: 85%;background: white;margin-left: 1.3rem;max-height: 10rem;overflow: auto;}
-	.username li{width: 100%;min-height: 2rem;line-height: 2rem;position: relative;margin-top: 0.5rem;}
-	.username li>img{width: 2rem;height: 2rem;border-radius: 50%;position: absolute;margin-left: 0.5rem;}
-	.username li>p{position: absolute;left: 3rem;}
-	.username >.active{background: rgba(0,0,0,0.3);}
 	/* 新朋友 */
 	.newFriendContent{width: 100%;background: white;margin-top: 0.625rem;}
 	.newFriend{width: 100%;height: 3rem;position: relative;z-index: 99;}
@@ -197,7 +159,7 @@
 	.friendContent>.myfriend{width: 100%;height: 3rem;position: relative;}
 	.friendContent>.myfriend>img{width: 3rem;height: 2rem;position: absolute;left: 0.5rem;top: 0.5rem;}
 	.friendContent>.myfriend .title{position: absolute;left: 4rem;line-height: 3rem;font-weight: 500}
-	.friendContent>.myfriend:after{width: 3rem;height: 3rem;position: absolute;right: 0;content: '';background: url('../assets/imgs/close2.png')}
+	.friendContent>.myfriend:after{width: 3rem;height: 3rem;position: absolute;right: 0;content: '';background: url('../../assets/imgs/close2.png')}
 	.friendContent ul{width: 100%;}
 	.friendContent ul li{width: 100%;height: 3rem;padding-left: 1rem;}
 	.friendContent ul li>img{width: 2rem;height: 2rem;margin: 0.25rem 0.5rem;border-radius: 50%;position: relative;display: inline-block;}

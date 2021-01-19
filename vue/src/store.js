@@ -10,11 +10,15 @@ import {Toast} from 'mint-ui';
 
 export default new Vuex.Store({
 	state:{
-		username:''
+		username:'',
+		members:null
 	},
 	mutations:{
 		async setUserID(state,username){
 			state.username=username;
+		},
+		setMembers(state,membersDate){
+			state.members=membersDate;
 		}
 	},
 	actions:{
@@ -45,6 +49,9 @@ export default new Vuex.Store({
 					sessionStorage.setItem("username",form.user);
 				}
 			}
+		},
+		getMembersDate({commit},data){
+			commit('setMembers',data);
 		}
 	}
 

@@ -201,6 +201,7 @@
 			async changeNote(){
 				if(this.note==this.oldNote) return;
 				let {data:{data}}=await this.axios.post('changeNote',{
+					username:this.myName,
 					friendname:this.userInfo,
 					note:this.note
 				});

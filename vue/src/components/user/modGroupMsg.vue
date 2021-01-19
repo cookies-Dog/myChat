@@ -20,10 +20,11 @@
 			<div class="members">
 				<div class="members-row1">
 					<p>群成员{{`(${message.length})`}}</p>
+					<i class="moreIcon" @click="isJump3()"></i>
 				</div>
 				<div class="memberContent">
 					<ul :style="{width:message.length*4+'rem'}">
-						<li v-for="item,index in message" @click="isJump(index)">
+						<li v-for="item,index in message">
 							<img :src="item.image|imgPath" alt="">
 							<p class="memberName">{{item.username}}</p>
 						</li>
@@ -31,7 +32,7 @@
 				</div>
 				<div class="addMember" @click="isJump2()">
 					<div>
-						<img src="../assets/imgs/add.png" alt="">
+						<img src="../../assets/imgs/add.png" alt="">
 					</div>
 					<p>添加</p>
 				</div>
@@ -81,6 +82,14 @@
 		},
 		methods:{
 			async modGroupMsg(){
+				let size=(this.$refs.image.files[0].size)/(1024*1024);
+				if(size>3){
+					Toast({
+						message:'上传图片不能超过3m',
+						position: 'middle',
+						duration: 1500
+					});
+				}
 				let formData=new FormData();
 				formData.append('file',this.$refs.image.files[0]);
 				formData.append('friendname',this.title);
@@ -92,17 +101,14 @@
             		'Content-Type': 'multipart/form-data'
         		};
         		let {data:{data}}=await this.axios.post('modGroupMsg',formData,config);
-        		if(data.length>0){
-					if(data=='文件过大'){
-						alert(`${data}`)
-					}else{
-						Toast({
-							message:'修改成功',
-							position: 'middle',
-							duration: 1000
-						});
-						this.$router.push({name:'dialog',params:{title:this.title}});
-					}
+        		if(data){
+					Toast({
+						message:'修改成功',
+						position: 'middle',
+						duration: 1000
+					});
+
+					this.$router.push({name:'dialog',params:{title:this.title}});
 				}
 			},
 			exitGroup(){
@@ -113,7 +119,6 @@
 							groupName:this.title
 						});
 						if(data){
-							console.log(data)
 							Toast({
 								message: '已退出该群聊',
 								position: 'middle',
@@ -133,7 +138,6 @@
 							groupName:this.title
 						});
 						if(data){
-							console.log(data)
 							Toast({
 								message: '已解散该群聊',
 								position: 'middle',
@@ -146,14 +150,11 @@
 					}
 				}).catch(()=>{});
 			},
-			isJump(i){
-				let group=this.groupManager+':'+this.title;
-				let userInfo=this.message[i].username+'?'+'delMember';
-				sessionStorage.setItem('group',group);
-				this.$router.push({name:'information',params:{userInfo}});
-			},
 			isJump2(){
 				this.$router.push({name:'addGroup',params:{groupName:this.title}});
+			},
+			isJump3(){
+				this.$router.push({name:'searchFriend',params:{friendName:this.title}});
 			}
 		}
 	}
@@ -212,13 +213,14 @@
 		top: 1rem;
 		z-index: 999;
 	}
-	.submitImg:after{width: 1rem;
+	.submitImg:after{
+		width: 1rem;
 		height: 1.5rem;
 		position: absolute;
 		top: 40%;
 		left: 80%;
 		content: '';
-		background:url('../assets/imgs/sprite-img.png') -1966px -76px no-repeat;zoom: 1.2;
+		background:url('../../assets/imgs/sprite-img.png') -1966px -76px no-repeat;zoom: 1.2;
 	}
 	.members{
 		width: 100%;
@@ -235,17 +237,37 @@
 		top: 0.5rem;
 		left: 0.5rem;
 	}
+	.members-row1 p{
+		display:inline;
+	}
+	.members-row1 .moreIcon{
+		width: 3rem;
+		height: 1.5rem;
+		position: absolute;
+		left: 17rem;
+	}
+	.members-row1 .moreIcon:after{
+		width: 1rem;
+		height: 1.5rem;
+		position: absolute;
+		top: 15%;
+		left: 46%;
+		content: '';
+		background:url('../../assets/imgs/sprite-img.png') -1966px -76px no-repeat;
+		zoom: 1.2;
+	}
 	.memberContent{
 		width: 16rem;
 		height: 4rem;
 		position: absolute;
 		top: 2rem;
-		overflow-x: scroll;
+		overflow-x: hidden;
 	}
-	.memberContent::-webkit-scrollbar {
+	/*.memberContent::-webkit-scrollbar {
   		display: none;
-	}
+	}*/
 	.members ul{
+		width: 16rem;
 		height: 4rem;
 	}
 	.members ul li{

@@ -2,6 +2,7 @@ module.exports={
 	publicPath:'/', 
 	outputDir:'build/',
 	lintOnSave:false,
+	transpileDependencies: ['vue-socket.io'],//兼容ie
 	pages:{
 		index:{
 			entry:'./src/main.js',

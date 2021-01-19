@@ -2,8 +2,8 @@
 	<div class="middle-container">
 			<div class="row1">
 				<input type="text" />
-				<p class="placeholder">点击搜索</p>
-				<img src="../assets/imgs/search.png">
+				<!-- <p class="placeholder">点击搜索</p> -->
+				<img src="../../assets/imgs/search.png">
 			</div>
 			<div class="dialog" @touchmove="isJumpDelete()">
 			<ul class="rows" @mouseout="longClick=false,cur=-1">
@@ -150,4 +150,6 @@
 	}
 </script>
 
-<style scoped></style>
+<style scoped>
+	
+</style>
